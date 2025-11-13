@@ -42,6 +42,7 @@ const CollaborationForm: FC<CollaborationFormProps> = ({ tripId, onClose, onUpda
                 >
                     <option value="member">Турист (Перегляд)</option>
                     <option value="collaborator">Співавтор (Керування місцями)</option>
+                    <option value="delete">Видалити</option>
                 </select>
             </div>
             
@@ -56,7 +57,7 @@ const CollaborationForm: FC<CollaborationFormProps> = ({ tripId, onClose, onUpda
                     type="submit" 
                     className="w-full bg-blue-600 hover:bg-blue-700"
                 >
-                    Додати
+                    Зберегти
                 </Button>
                 <Button 
                     type="button" 

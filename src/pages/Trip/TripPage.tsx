@@ -127,7 +127,7 @@ const TripPage: FC = () => {
                                 className="w-[200px] py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-sm"
                                 onClick={handleOpenCollabModal}
                             >
-                                Додати співавторів
+                                Редагувати учасників
                             </Button>
                             
                             <Button 

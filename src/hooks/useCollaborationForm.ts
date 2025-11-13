@@ -1,10 +1,10 @@
 import { useState, useCallback, FormEvent, ChangeEvent } from 'react';
 import { findUserByEmail } from '../services/authService.ts';
-import { addUserToTripList } from '../services/tripsService.ts';
+import { addUserToTripList, removeUserFromTrip } from '../services/tripsService.ts';
 
 interface FormData {
     email: string;
-    role: 'collaborator' | 'member';
+    role: 'collaborator' | 'member' | 'delete';
 }
 
 interface CollaborationFormHook {
@@ -25,7 +25,7 @@ function useCollaborationForm(tripId: number, onUpdate: () => void, initialState
     }, []);
 
     const handleSelectChange = useCallback((e: ChangeEvent<HTMLSelectElement>) => {
-        setFormData(prev => ({ ...prev, role: e.target.value as 'collaborator' | 'member' }));
+        setFormData(prev => ({ ...prev, role: e.target.value as 'collaborator' | 'member' | 'delete' }));
     }, []);
 
     const handleSubmit = useCallback((e: FormEvent) => {
@@ -40,15 +40,25 @@ function useCollaborationForm(tripId: number, onUpdate: () => void, initialState
         }
 
         const listType = formData.role;
-        
-        const result = addUserToTripList(tripId, foundUser.id, listType);
+        let result;
+
+        if (listType === 'delete') {
+            result = removeUserFromTrip(tripId, foundUser.id); 
+        } else {
+            result = addUserToTripList(tripId, foundUser.id, listType);
+        }
 
         if (result.success) {
-            setStatusMessage(`Користувач ${foundUser.name} успішно доданий як ${listType === 'collaborator' ? 'Співавтор' : 'Турист'}.`);
+            let successMessage;
+            if (listType === 'delete') {
+                successMessage = `Користувач ${foundUser.name} успішно видалений зі списків учасників подорожі.`;
+            } else {
+                successMessage = `Користувач ${foundUser.name} успішно доданий як ${listType === 'collaborator' ? 'Співавтор' : 'Турист'}.`;
+            }
+            setStatusMessage(successMessage);
             onUpdate();
-            // Можна додати resetForm, якщо потрібно
         } else {
-            setStatusMessage(`Помилка додавання: ${result.message}`);
+            setStatusMessage(`Помилка: ${result.message}`);
         }
     }, [tripId, formData.email, formData.role, onUpdate]);
 

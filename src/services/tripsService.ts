@@ -193,6 +193,42 @@ export const addUserToTripList = (tripId: number, userId: number, listType: 'col
     return { success: true, data: updatedTrip };
 };
 
+export const removeUserFromTrip = (tripId: number, userId: number): ServiceResult<Trip> => {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return { success: false, message: 'Користувач не авторизований.' };
+
+    const trips = loadTrips();
+    const tripIndex = trips.findIndex(t => t.id === tripId);
+    
+    if (tripIndex === -1) return { success: false, message: 'Подорож не знайдена.' };
+    
+    const trip = trips[tripIndex];
+    
+    if (trip.ownerId !== currentUser.id && currentUser.role !== 'Admin') {
+         return { success: false, message: 'Недостатньо прав для керування учасниками.' };
+    }
+
+    const newCollaborators = trip.collaboratorIds.filter(id => id !== userId);
+    const newMembers = trip.memberIds.filter(id => id !== userId);
+
+    if (newCollaborators.length === trip.collaboratorIds.length && newMembers.length === trip.memberIds.length) {
+        return { success: false, message: 'Користувач не знайдений у списках учасників/співавторів цієї подорожі.' };
+    }
+    
+    const updatedTrip: Trip = { 
+        ...trip, 
+        collaboratorIds: newCollaborators,
+        memberIds: newMembers 
+    };
+    
+    const newTrips = [...trips];
+    newTrips[tripIndex] = updatedTrip;
+    
+    saveTrips(newTrips);
+
+    return { success: true, data: updatedTrip };
+};
+
 const checkPlaceAccess = (trip: Trip, currentUser: UserPublic): boolean => {
     return trip.ownerId === currentUser.id || trip.collaboratorIds.includes(currentUser.id);
 };
