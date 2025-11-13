@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-import { getTripById, Trip, Place } from '../services/tripsService.ts';
-import { findUserById, UserPublic } from '../services/authService.ts';
+import { useNavigate, useParams } from 'react-router-dom';
+import { getTripById, Trip, Place, deleteTrip } from '../services/tripsService.ts';
+import { getUsersPublicDataByIds, UserPublic } from '../services/authService.ts'; 
 import useTripPlaceCard, { TripPlaceCardHook } from './useTripPlaceCard.ts';
 import { useAuthStore } from './useAuthStore.ts';
 
@@ -12,7 +12,7 @@ export interface TripPageHook extends TripPlaceCardHook {
     isOwnerOrCollaborator: boolean;
     placesByDay: Map<number, Place[]>;
     dayNumbers: number[];
-    formatUserList: (ids: number[]) => string;
+    formatUserList: (ids: string[]) => string;
     
     placeToEdit: Place | null;
     setPlaceToEdit: React.Dispatch<React.SetStateAction<Place | null>>;
@@ -29,26 +29,11 @@ export interface TripPageHook extends TripPlaceCardHook {
     isCollabModalOpen: boolean;
     handleOpenCollabModal: () => void;
     handleCloseCollabModal: () => void;
+
+    handleDeleteTrip: () => void;
     
-    loadTripData: () => void;
+    loadTripData: () => Promise<void>;
 }
-
-const formatUserList = (ids: number[]): string => {
-    if (!ids || ids.length === 0) return 'немає';
-    return ids.map(id => findUserById(id)?.name || 'Невідомий користувач').join(', ');
-};
-
-const groupPlacesByDay = (places: Place[]): Map<number, Place[]> => {
-    const sortedPlaces = places.sort((a, b) => a.dayNumber - b.dayNumber);
-    
-    return sortedPlaces.reduce((acc, place) => {
-        if (!acc.has(place.dayNumber)) {
-            acc.set(place.dayNumber, []);
-        }
-        acc.get(place.dayNumber)!.push(place);
-        return acc;
-    }, new Map<number, Place[]>());
-};
 
 function useTripPage(): TripPageHook {
     const { tripId } = useParams<{ tripId: string }>();
@@ -58,24 +43,60 @@ function useTripPage(): TripPageHook {
     const [isTripModalOpen, setIsTripModalOpen] = useState(false);
     const [isPlaceModalOpen, setIsPlaceModalOpen] = useState(false);
     const [isCollabModalOpen, setIsCollabModalOpen] = useState(false);
+    const [userMap, setUserMap] = useState<Map<string, string>>(new Map());
     const currentUser = useAuthStore((state) => state.user);
+    const navigate = useNavigate();
 
-    const loadTripData = useCallback(() => {
-        if (!tripId) return;
+    const loadTripData = useCallback(async () => {
+        if (!tripId) return; 
         setIsLoading(true);
-        const foundTrip = getTripById(Number(tripId)); 
+
+        const foundTrip = await getTripById(tripId); 
         setTrip(foundTrip || null);
+
+        if (foundTrip) {
+            const allUids = new Set([
+                foundTrip.ownerId, 
+                ...foundTrip.collaboratorIds, 
+                ...foundTrip.memberIds
+            ]);
+            
+            const users = await getUsersPublicDataByIds(Array.from(allUids));
+            
+            const map = new Map<string, string>();
+            users.forEach(u => map.set(u.uid, u.name));
+            setUserMap(map);
+        }
+        
         setIsLoading(false);
     }, [tripId]);
 
     const { handleDelete: handleDeletePlace, handleEdit: handleUpdatePlace } = useTripPlaceCard(
-        trip?.id || 0, 
+        trip?.id || '0', 
         loadTripData
     );
 
     useEffect(() => {
         loadTripData();
     }, [tripId, loadTripData]);
+
+    const formatUserList = useCallback((ids: string[]): string => {
+        if (!ids || ids.length === 0) return 'немає';
+        
+        return ids.map(id => userMap.get(id) || 'Невідомий користувач').join(', ');
+    }, [userMap]);
+
+    const groupPlacesByDay = useCallback((places: Place[]): Map<number, Place[]> => {
+        const sortedPlaces = places.sort((a, b) => a.dayNumber - b.dayNumber);
+        
+        return sortedPlaces.reduce((acc, place) => {
+            if (!acc.has(place.dayNumber)) {
+                acc.set(place.dayNumber, []);
+            }
+            acc.get(place.dayNumber)!.push(place);
+            return acc;
+        }, new Map<number, Place[]>());
+    }, []);
 
     const handleOpenTripModal = useCallback(() => setIsTripModalOpen(true), []);
     const handleCloseTripModal = useCallback(() => setIsTripModalOpen(false), []);
@@ -98,9 +119,16 @@ function useTripPage(): TripPageHook {
         setIsPlaceModalOpen(true);
     }, []);
 
+    const handleDeleteTrip = useCallback(() => {
+        if (trip && window.confirm(`Ви впевнені, що хочете видалити подорож "${trip.title}"?`)) {
+            deleteTrip(trip.id);
+            navigate("/trips");
+        }
+    }, [trip]);
+
     const isOwnerOrCollaborator: boolean = (
         currentUser && trip 
-            ? currentUser.id === trip.ownerId || trip.collaboratorIds.includes(currentUser.id)
+            ? currentUser.uid === trip.ownerId || trip.collaboratorIds.includes(currentUser.uid)
             : false
     );
     
@@ -133,6 +161,8 @@ function useTripPage(): TripPageHook {
         isCollabModalOpen,
         handleOpenCollabModal,
         handleCloseCollabModal,
+
+        handleDeleteTrip,
         
         loadTripData,
     };

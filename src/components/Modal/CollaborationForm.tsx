@@ -4,7 +4,7 @@ import Button from '../UI/Button.tsx';
 import useCollaborationForm from '../../hooks/useCollaborationForm.ts';
 
 interface CollaborationFormProps {
-    tripId: number;
+    tripId: string;
     onClose: () => void;
     onUpdate: () => void;
 }

@@ -1,5 +1,5 @@
 import { useState, useCallback, FormEvent, ChangeEvent } from 'react';
-import { findUserByEmail } from '../services/authService.ts';
+import { findUserByEmail } from '../services/authService.ts'; 
 import { addUserToTripList, removeUserFromTrip } from '../services/tripsService.ts';
 
 interface FormData {
@@ -15,7 +15,7 @@ interface CollaborationFormHook {
     handleSubmit: (e: FormEvent) => void;
 }
 
-function useCollaborationForm(tripId: number, onUpdate: () => void, initialState: FormData): CollaborationFormHook {
+function useCollaborationForm(tripId: string, onUpdate: () => void, initialState: FormData): CollaborationFormHook {
     const [formData, setFormData] = useState<FormData>(initialState);
     const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -28,24 +28,25 @@ function useCollaborationForm(tripId: number, onUpdate: () => void, initialState
         setFormData(prev => ({ ...prev, role: e.target.value as 'collaborator' | 'member' | 'delete' }));
     }, []);
 
-    const handleSubmit = useCallback((e: FormEvent) => {
+    const handleSubmit = useCallback(async (e: FormEvent) => {
         e.preventDefault();
         setStatusMessage(null);
 
-        const foundUser = findUserByEmail(formData.email);
+        const foundUserResult = await findUserByEmail(formData.email);
 
-        if (!foundUser) {
+        if (!foundUserResult.success || !foundUserResult.user) {
             setStatusMessage(`Помилка: Користувача з email "${formData.email}" не знайдено.`);
             return;
         }
 
+        const foundUser = foundUserResult.user;
         const listType = formData.role;
         let result;
 
         if (listType === 'delete') {
-            result = removeUserFromTrip(tripId, foundUser.id); 
+            result = await removeUserFromTrip(tripId, foundUser.uid); 
         } else {
-            result = addUserToTripList(tripId, foundUser.id, listType);
+            result = await addUserToTripList(tripId, foundUser.uid, listType);
         }
 
         if (result.success) {

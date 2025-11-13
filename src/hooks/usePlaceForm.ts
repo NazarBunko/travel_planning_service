@@ -23,7 +23,7 @@ const getInitialState = (place: Place | null): PlaceFormData => ({
     dayNumber: place?.dayNumber || 1,
 });
 
-function usePlaceForm(tripId: number, placeToEdit: Place | null, onClose: () => void, onUpdate: () => void): PlaceFormHook {
+function usePlaceForm(tripId: string, placeToEdit: Place | null, onClose: () => void, onUpdate: () => void): PlaceFormHook {
     
     const { formData, setFormData } = useForm<PlaceFormData>(getInitialState(placeToEdit));
     
@@ -48,7 +48,7 @@ function usePlaceForm(tripId: number, placeToEdit: Place | null, onClose: () => 
         setFormData(prev => ({ ...prev, [e.target.name]: value }));
     }, [setFormData]);
 
-    const handleSubmit = useCallback((e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
 
         if (formData.dayNumber < 1) {
@@ -65,9 +65,9 @@ function usePlaceForm(tripId: number, placeToEdit: Place | null, onClose: () => 
         let result;
 
         if (isEditMode && placeToEdit) {
-            result = updatePlaceInTrip(tripId, placeToEdit.id, data);
+            result = await updatePlaceInTrip(tripId, placeToEdit.id, data); 
         } else {
-            result = addPlaceToTrip(tripId, data);
+            result = await addPlaceToTrip(tripId, data);
         }
         
         if (result.success) {
@@ -76,7 +76,7 @@ function usePlaceForm(tripId: number, placeToEdit: Place | null, onClose: () => 
         } else {
             alert(result.message);
         }
-    }, [isEditMode, placeToEdit, tripId, formData, onClose, onUpdate]);
+    };
     
     return {
         formData,

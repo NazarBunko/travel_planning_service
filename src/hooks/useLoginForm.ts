@@ -24,11 +24,11 @@ function useLoginForm(): LoginFormHook {
         setFormData(prev => ({ ...prev, [name]: value }));
     }, []);
 
-    const handleSubmit = useCallback((e: FormEvent) => {
+    const handleSubmit = useCallback(async (e: FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
-        const success = login(formData.email, formData.password); 
+        const success = await login(formData.email, formData.password); 
         
         setTimeout(() => {
             setIsLoading(false);

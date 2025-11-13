@@ -1,135 +1,120 @@
-const USER_DB_KEY = 'meeting_app_users_db';
-const TOKEN_KEY = 'auth_token';
-
-interface User {
-    id: number;
-    name: string;
-    email: string;
-    password?: string; 
-    role: 'User' | 'Admin';
-}
+import { 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    signOut, 
+} from 'firebase/auth';
+import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db } from '../firebase/config.ts';
+import { useAuthStore } from '../hooks/useAuthStore.ts';
 
 export interface UserPublic {
-    id: number;
-    name: string;
+    uid: string; 
     email: string;
-    role: 'User' | 'Admin';
+    name: string;
+    role?: 'User' | 'Admin';
 }
 
-export interface AuthResult {
+export interface ServiceResult<T = unknown> {
     success: boolean;
     message?: string;
     user?: UserPublic;
+    data?: T;
 }
 
-export const loadUsers = (): User[] => {
-    return JSON.parse(localStorage.getItem(USER_DB_KEY) || '[]');
+const addUserDocument = async (user: {uid: string, email: string}, name: string): Promise<UserPublic> => {
+    const userDocRef = doc(db, 'users', user.uid);
+    const userPublic: UserPublic = {
+        uid: user.uid,
+        email: user.email!,
+        name: name,
+        role: 'User',
+    };
+    await setDoc(userDocRef, userPublic, { merge: true });
+    return userPublic;
 };
 
-export const saveUsers = (users: User[]): void => {
-    localStorage.setItem(USER_DB_KEY, JSON.stringify(users));
-};
-
-export const findUserByEmail = (email: string): User | undefined => {
-    const users = loadUsers();
-    return users.find(u => u.email === email);
-};
-
-export const findUserById = (id: number): User | undefined => {
-    const users = loadUsers();
-    return users.find(u => u.id === id);
-};
-
-const generateNextUserId = (users: User[]): number => {
-    if (users.length === 0) {
-        return 1;
+export const getUserPublicData = async (uid: string): Promise<UserPublic | null> => {
+    const userDocRef = doc(db, 'users', uid);
+    const docSnap = await getDoc(userDocRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as UserPublic;
     }
-    const maxId = users.reduce((max, user) => (user.id > max ? user.id : max), 0);
-    return maxId + 1;
-};
-
-export const getCurrentUserToken = (): string | null => {
-    return localStorage.getItem(TOKEN_KEY);
+    return null;
 };
 
 export const getCurrentUser = (): UserPublic | null => {
-    const token = getCurrentUserToken();
-    if (!token) return null;
-    const parts = token.split('-');
-    const email = parts[1];
-    const user = findUserByEmail(email); 
-    
-    if (user) {
-        return { id: user.id, name: user.name, email: user.email, role: user.role };
-    }
-    
-    return null; 
+    const user = useAuthStore.getState().user;
+    return user;
 };
 
-export const registerUser = ({ name, email, password }: { name: string, email: string, password: string }): AuthResult => {
-    const users = loadUsers();
-    if (findUserByEmail(email)) {
-        return { success: false, message: 'Користувач з таким email вже існує.' };
+export const findUserByEmail = async (email: string): Promise<ServiceResult> => {
+    try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', email));
+        
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+            const userPublicData = userDoc.data() as UserPublic;
+            
+            return { success: true, user: userPublicData };
+        }
+        
+        return { success: false, message: 'Користувача не знайдено.' };
+    } catch (error: any) {
+        return { success: false, message: 'Помилка пошуку користувача.' };
     }
-
-    const newUser: User = { 
-        id: generateNextUserId(users),
-        name, 
-        email, 
-        password, 
-        role: 'User'
-    };
-
-    saveUsers([...users, newUser]);
-    
-    return { success: true, user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role } };
 };
 
-export const resetPassword = (email: string, newPassword: string): { success: boolean, message: string } => {
-    const users = loadUsers();
-    const userIndex = users.findIndex(u => u.email === email);
-
-    if (userIndex === -1) {
-        return { success: false, message: 'Користувача з таким email не знайдено.' };
-    }
+export const getUsersPublicDataByIds = async (uids: string[]): Promise<UserPublic[]> => {
+    if (uids.length === 0) return [];
     
-    const updatedUser = { ...users[userIndex], password: newPassword };
+    const uniqueUids = Array.from(new Set(uids)).slice(0, 10);
     
-    const newUsers = [...users];
-    newUsers[userIndex] = updatedUser;
-
-    saveUsers(newUsers);
-
-    return { success: true, message: 'Пароль успішно скинуто.' };
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('uid', 'in', uniqueUids));
+    
+    const querySnapshot = await getDocs(q);
+    
+    const users: UserPublic[] = querySnapshot.docs.map(doc => doc.data() as UserPublic);
+    
+    return users;
 };
 
-export const loginUser = (email: string, password: string): AuthResult => {
-    const user = findUserByEmail(email);
-
-    if (user && user.password === password) {
-        const fakeToken = `token-${user.email}-${Date.now()}`;
-        localStorage.setItem(TOKEN_KEY, fakeToken);
-        return { success: true, user: { id: user.id, email: user.email, name: user.name, role: user.role } };
-    }
-    
-    return { success: false, message: 'Неправильний email або пароль.' };
+export const findUserById = (uid: string): UserPublic | undefined => {
+    console.warn("ATTENTION: findUserById є синхронним, але має бути асинхронним для Firestore!");
+    return undefined;
 };
 
-export const logoutUser = (): void => {
-    localStorage.removeItem(TOKEN_KEY);
+export const registerUser = async (email: string, password: string, name: string): Promise<ServiceResult> => {
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const authUser = { uid: userCredential.user.uid, email: userCredential.user.email! };
+        const userPublicData = await addUserDocument(authUser, name);
+        
+        return { success: true, user: userPublicData };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
 };
 
-(function initUsers(): void {
-    const users = loadUsers();
-    if (users.length === 0) {
-        const adminUser: User = {
-            id: 1,
-            name: 'Admin',
-            email: 'admin@app.com',
-            password: 'admin',
-            role: 'Admin'
-        };
-        saveUsers([adminUser]);
-        console.log("Admin ініціалізовано: admin@app.com / admin");
+export const loginUser = async (email: string, password: string): Promise<ServiceResult> => {
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const userPublicData = await getUserPublicData(userCredential.user.uid);
+        
+        return { success: true, user: userPublicData || undefined };
+    } catch (error: any) {
+        return { success: false, message: error.message };
     }
-})();
+};
+
+export const logoutUser = async (): Promise<void> => {
+    await signOut(auth);
+};
+
+export const resetPassword = (email: string, newPassword: string): ServiceResult => {
+    console.error("ATTENTION: resetPassword має бути асинхронною функцією Firestore!");
+    return { success: false, message: 'Функція не реалізована для Firestore.' };
+};

@@ -29,6 +29,7 @@ const TripPage: FC = () => {
         handleOpenCollabModal,
         handleCloseCollabModal,
         loadTripData,
+        handleDeleteTrip,
     }: TripPageHook = useTripPage();
 
     if (isLoading) {
@@ -38,8 +39,6 @@ const TripPage: FC = () => {
     if (!currentUser || !trip) {
         return <div className="text-center mt-12 text-red-600">Доступ заборонено або поїздку не знайдено.</div>;
     }
-    
-    const handleDeleteTrip = () => console.log('Delete Trip');
     
     const formattedStartDate = trip.startDate 
         ? new Date(trip.startDate).toLocaleDateString('uk-UA') 
@@ -117,7 +116,7 @@ const TripPage: FC = () => {
                         <>
                             <Button 
                                 className="w-[200px] py-2 px-3 bg-green-500 hover:bg-green-600 text-white text-sm 
-                                        focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                           focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                                 onClick={handleOpenPlaceModal}
                             >
                                 Додати місце
@@ -125,7 +124,7 @@ const TripPage: FC = () => {
                             
                             <Button 
                                 className="w-[200px] py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-sm 
-                                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                 onClick={handleOpenCollabModal}
                             >
                                 Редагувати учасників
@@ -134,7 +133,7 @@ const TripPage: FC = () => {
                             <Button 
                                 onClick={handleOpenTripModal}
                                 className="w-[200px] py-2 px-3 bg-orange-600 hover:bg-orange-700 text-white text-sm 
-                                        focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                                           focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
                             >
                                 Редагувати
                             </Button>
@@ -142,7 +141,7 @@ const TripPage: FC = () => {
                             <Button 
                                 onClick={handleDeleteTrip}
                                 className="w-[200px] py-2 px-3 bg-red-600 hover:bg-red-700 text-white text-sm 
-                                        focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                           focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                             >
                                 Видалити
                             </Button>

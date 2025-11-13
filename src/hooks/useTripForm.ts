@@ -42,7 +42,7 @@ function useTripForm(trip?: Trip, onClose?: () => void, onUpdate?: () => void): 
     
     const isFormValid = Boolean(!isInvalidDateRange && formData.title && formData.description && formData.startDate && formData.endDate);
 
-    const handleSubmit = useCallback((e: FormEvent) => {
+    const handleSubmit = useCallback(async (e: FormEvent) => {
         e.preventDefault();
 
         if (!isFormValid) {
@@ -60,9 +60,9 @@ function useTripForm(trip?: Trip, onClose?: () => void, onUpdate?: () => void): 
         let result;
         
         if (isEditMode && trip) {
-            result = updateTrip(trip.id, baseData);
+            result = await updateTrip(trip.id, baseData);
         } else {
-            result = createTrip({
+            result = await createTrip({
                 ...baseData,
                 collaboratorIds: [],
                 memberIds: [],

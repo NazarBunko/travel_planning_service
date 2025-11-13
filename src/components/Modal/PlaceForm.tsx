@@ -5,7 +5,7 @@ import { Place } from '../../services/tripsService.ts';
 import usePlaceForm from '../../hooks/usePlaceForm.ts';
 
 interface PlaceFormProps {
-    tripId: number;
+    tripId: string;
     placeToEdit: Place | null;
     onClose: () => void;
     onUpdate: () => void;

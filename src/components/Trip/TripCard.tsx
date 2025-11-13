@@ -1,16 +1,16 @@
 import React, { FC } from 'react';
 import Button from '../UI/Button.tsx';
-import { getCurrentUser, UserPublic } from '../../services/authService.ts';
+import { useAuthStore } from '../../hooks/useAuthStore.ts'; 
 import { Trip } from '../../services/tripsService.ts';
 
 interface TripCardProps {
     trip: Trip;
     onShow: (trip: Trip) => void;
-    onDelete: (id: number) => void;
+    onDelete: (id: string) => void;
 }
 
 const TripCard: FC<TripCardProps> = ({ trip, onShow, onDelete }) => {
-    const currentUser: UserPublic | null = getCurrentUser();
+    const currentUser = useAuthStore((state) => state.user);
     
     const formattedStartDate = trip.startDate 
         ? new Date(trip.startDate).toLocaleDateString('uk-UA') 
@@ -22,15 +22,18 @@ const TripCard: FC<TripCardProps> = ({ trip, onShow, onDelete }) => {
     if (!currentUser) return null;
 
     const isOwnerOrCollaborator: boolean = (
-        currentUser.id === trip.ownerId ||
-        trip.collaboratorIds.includes(currentUser.id)
+        currentUser.uid === trip.ownerId ||
+        trip.collaboratorIds.includes(currentUser.uid)
     );
     
     const canManage: boolean = isOwnerOrCollaborator || currentUser.role === "Admin";
 
     return (
         <div className="border border-gray-300 p-4 mb-3 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center bg-white shadow-md">
-            <div className="mb-3 md:mb-0">
+            <div 
+                className="mb-3 md:mb-0 cursor-pointer flex-grow" 
+                onClick={() => onShow(trip)}
+            >
                 <h3 className="text-xl font-bold text-gray-900">{trip.title}</h3>
                 <p className="text-sm text-gray-600 mt-1">{trip.description}</p>
                 <p className="text-xs text-gray-500 mt-2">
@@ -40,7 +43,7 @@ const TripCard: FC<TripCardProps> = ({ trip, onShow, onDelete }) => {
             
             <div className="flex space-x-2 flex-shrink-0">
                 {canManage && (
-                <>
+                    <>
                         <Button 
                             onClick={() => onDelete(trip.id)} 
                             className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
@@ -51,7 +54,7 @@ const TripCard: FC<TripCardProps> = ({ trip, onShow, onDelete }) => {
                 )}
                 <Button 
                     onClick={() => onShow(trip)} 
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                     Переглянути
                 </Button>

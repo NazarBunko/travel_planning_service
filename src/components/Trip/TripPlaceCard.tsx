@@ -5,7 +5,7 @@ import { Place } from '../../services/tripsService.ts';
 interface TripPlaceCardProps {
     place: Place;
     canManage: boolean;
-    onDelete: (placeId: number) => void;
+    onDelete: (placeId: string) => void;
     onEdit: (place: Place) => void; 
 }
 

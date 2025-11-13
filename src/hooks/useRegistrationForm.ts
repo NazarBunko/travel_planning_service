@@ -1,8 +1,9 @@
-import { useState, useCallback, ChangeEvent, FormEvent } from 'react';
-import { registerUser, AuthResult } from '../services/authService.ts';
+import { useState, useCallback, FormEvent, ChangeEvent, useMemo } from 'react';
+import { registerUser } from '../services/authService.ts';
+import { useAuthStore } from './useAuthStore.ts';
 import { useNavigate } from 'react-router-dom';
 
-export interface RegistrationFormData {
+interface FormData {
     name: string;
     email: string;
     password: string;
@@ -10,73 +11,61 @@ export interface RegistrationFormData {
 }
 
 export interface RegistrationFormHook {
-    formData: RegistrationFormData;
+    formData: FormData;
     isLoading: boolean;
     error: string | null;
     handleChange: (event: ChangeEvent<HTMLInputElement>) => void;
-    handleSubmit: (event: FormEvent<HTMLFormElement>) => void;
+    handleSubmit: (event: FormEvent) => void;
     isSubmitDisabled: boolean;
 }
 
 function useRegistrationForm(): RegistrationFormHook {
-    const [formData, setFormData] = useState<RegistrationFormData>({name: '', email: '', password: '', confirmPassword: ''});
-    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [formData, setFormData] = useState<FormData>({ name: '', email: '', password: '', confirmPassword: '' });
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
+    
+    const login = useAuthStore((state) => state.login);
     const navigate = useNavigate();
 
     const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
         
-        setFormData(prev => {
-            const updatedFormData = { ...prev, [name]: value };
-            
-            setError(null);
-
-            if (updatedFormData.password && updatedFormData.confirmPassword && updatedFormData.password !== updatedFormData.confirmPassword) {
-                setError('Паролі мають співпадати');
-            } else if (!updatedFormData.password || !updatedFormData.confirmPassword) {
-                setError(null);
-            }
-            
-            return updatedFormData;
-        });
+        setFormData(prev => ({ ...prev, [name]: value }));
+        setError(null);
     }, []);
 
-    const handleSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault(); 
-        
-        const isPasswordMismatch = formData.password !== formData.confirmPassword;
+    const isPasswordMismatch = useMemo(() => {
+        return formData.password !== formData.confirmPassword;
+    }, [formData.password, formData.confirmPassword]);
 
-        if (error || isPasswordMismatch) {
-            alert("Будь ласка, виправте помилку співпадіння паролів.");
+    const isFormIncomplete = useMemo(() => {
+        return !formData.name || !formData.email || !formData.password || !formData.confirmPassword;
+    }, [formData.name, formData.email, formData.password, formData.confirmPassword]);
+
+    const isSubmitDisabled = isFormIncomplete || isPasswordMismatch || isLoading;
+
+    const handleSubmit = useCallback(async (e: FormEvent) => {
+        e.preventDefault(); 
+        setError(null);
+        
+        if (isPasswordMismatch) {
+            setError('Паролі мають співпадати.');
             return;
         }
 
         setIsLoading(true);
-        const result: AuthResult = registerUser({ name: formData.name, email: formData.email, password: formData.password });
+        
+        const result = await registerUser(formData.email, formData.password, formData.name); 
 
-        if(result.success){
-            setTimeout(() => {
-                setIsLoading(false);
-                alert(`Реєстрація успішна для: ${formData.email}`);
-                navigate('/trips', { replace: true });
-            }, 1500); 
+        if (result.success) {
+            alert(`Реєстрація успішна! Вхід...`);
+            navigate('/trips', { replace: true });
         } else {
-            setIsLoading(false);
-            alert(result.message!);
+            setError(result.message || 'Невідома помилка реєстрації.');
         }
-    }, [formData, error, navigate]);
 
-    const isFormIncomplete: boolean = !formData.name 
-                              || !formData.email 
-                              || !formData.password 
-                              || !formData.confirmPassword;
-    
-    const isPasswordMismatch: boolean = formData.password !== formData.confirmPassword;
-    
-    const isSubmitDisabled: boolean = isFormIncomplete || isPasswordMismatch;
-
+        setIsLoading(false);
+    }, [formData, isPasswordMismatch, navigate]);
 
     return {
         formData,
