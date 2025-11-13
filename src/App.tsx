@@ -1,26 +1,50 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { FC, ReactElement } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import LoginPage from './pages/Auth/LoginPage.tsx';
+import RegistrationPage from './pages/Auth/RegistrationPage.tsx';
+
+import { getCurrentUserToken } from './services/authService.ts';
+
+const isLoggedIn = (): boolean => !!getCurrentUserToken();
+
+interface AuthRedirectProps {
+    element: ReactElement;
+}
+
+const AuthRedirectIfLoggedIn: FC<AuthRedirectProps> = ({ element }) => {
+    return isLoggedIn() ? <Navigate to="/trips" replace /> : element;
+};
+
+const App: FC = () => {
+    return (
+        <Router>
+            <Routes>
+
+                <Route 
+                    path="/" 
+                    element={<Navigate to={isLoggedIn() ? "/trips" : "/login"} replace />} 
+                />
+
+                <Route 
+                    path="/login" 
+                    element={<AuthRedirectIfLoggedIn element={<LoginPage />} />} 
+                />
+                <Route 
+                    path="/register" 
+                    element={<AuthRedirectIfLoggedIn element={<RegistrationPage />} />} 
+                />
+                
+                <Route path="*" element={
+                    <div style={{ padding: '50px', textAlign: 'center' }}>
+                        <h1>404: Сторінку не знайдено</h1>
+                        <p>Повернутися на <a href="/">Головну</a></p>
+                    </div>
+                } />
+
+            </Routes>
+        </Router>
+    );
 }
 
 export default App;
