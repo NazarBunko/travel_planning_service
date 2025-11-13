@@ -53,22 +53,33 @@ export const getAuthorizedUserTrips = async (): Promise<ServiceResult<Trip[]>> =
     if (!currentUser) return { success: false, message: 'Користувач не авторизований.' };
 
     const userId = currentUser.uid;
-    
-    const tripsQuery = query(tripsCollection, where('ownerId', '==', userId)); 
-    const snapshot = await getDocs(tripsQuery);
-    
-    const trips: Trip[] = snapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data(),
-    })) as Trip[];
-    
-    const authorizedTrips = trips.filter(t => 
-        t.ownerId === userId || 
-        t.collaboratorIds.includes(userId) ||
-        t.memberIds.includes(userId)
-    );
+    const allTrips: Trip[] = [];
+    const tripIds = new Set<string>();
 
-    return { success: true, data: authorizedTrips };
+    const ownerQuery = query(tripsCollection, where('ownerId', '==', userId));
+    const collabQuery = query(tripsCollection, where('collaboratorIds', 'array-contains', userId));
+    const memberQuery = query(tripsCollection, where('memberIds', 'array-contains', userId));
+    
+    const [ownerSnapshot, collabSnapshot, memberSnapshot] = await Promise.all([
+        getDocs(ownerQuery),
+        getDocs(collabQuery),
+        getDocs(memberQuery),
+    ]);
+    
+    const processSnapshot = (snapshot: any) => {
+        snapshot.docs.forEach((doc: any) => {
+            if (!tripIds.has(doc.id)) {
+                allTrips.push({ id: doc.id, ...doc.data() } as Trip);
+                tripIds.add(doc.id);
+            }
+        });
+    };
+
+    processSnapshot(ownerSnapshot);
+    processSnapshot(collabSnapshot);
+    processSnapshot(memberSnapshot);
+
+    return { success: true, data: allTrips };
 };
 
 export const createTrip = async (data: TripData): Promise<ServiceResult<Trip>> => {

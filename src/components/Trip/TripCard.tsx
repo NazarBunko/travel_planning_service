@@ -21,13 +21,6 @@ const TripCard: FC<TripCardProps> = ({ trip, onShow, onDelete }) => {
 
     if (!currentUser) return null;
 
-    const isOwnerOrCollaborator: boolean = (
-        currentUser.uid === trip.ownerId ||
-        trip.collaboratorIds.includes(currentUser.uid)
-    );
-    
-    const canManage: boolean = isOwnerOrCollaborator || currentUser.role === "Admin";
-
     return (
         <div className="border border-gray-300 p-4 mb-3 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center bg-white shadow-md">
             <div 
@@ -42,16 +35,6 @@ const TripCard: FC<TripCardProps> = ({ trip, onShow, onDelete }) => {
             </div>
             
             <div className="flex space-x-2 flex-shrink-0">
-                {canManage && (
-                    <>
-                        <Button 
-                            onClick={() => onDelete(trip.id)} 
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                        >
-                            Видалити
-                        </Button>
-                    </>
-                )}
                 <Button 
                     onClick={() => onShow(trip)} 
                     className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
