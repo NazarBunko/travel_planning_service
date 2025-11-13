@@ -6,7 +6,7 @@ import TripForm from '../../components/Modal/TripForm.tsx';
 import Input from '../../components/UI/Input.tsx';
 import useTripList, { TripListHook } from '../../hooks/useTripList.ts';
 import { Trip } from '../../services/tripsService.ts';
-import { getCurrentUser, UserPublic } from '../../services/authService.ts';
+import { useAuthStore } from '../../hooks/useAuthStore.ts';
 
 const TripListPage: FC = () => {
     const { 
@@ -15,7 +15,6 @@ const TripListPage: FC = () => {
         error, 
         handleDelete, 
         handleShow,
-        handleLogout,
         loadTrips,
         isCreateModalOpen,
         handleOpenCreateModal,
@@ -23,13 +22,14 @@ const TripListPage: FC = () => {
     }: TripListHook = useTripList();
 
     const [searchTerm, setSearchTerm] = useState('');
+    const handleLogout = useAuthStore((state) => state.logout);
     
     const filteredTrips: Trip[] = trips.filter(trip => 
         trip.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
         trip.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const currentUser: UserPublic | null = getCurrentUser();
+    const currentUser = useAuthStore((state) => state.user);
 
     if (isLoading) {
         return <p className="text-center mt-12 text-gray-600 text-lg">Завантаження подорожей...</p>;
@@ -70,7 +70,8 @@ const TripListPage: FC = () => {
 
                 <div className="flex justify-end mb-4">
                     <Button 
-                        className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 text-base"
+                        className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 text-base
+                                    focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                         onClick={handleOpenCreateModal}
                     >
                         + Створити Подорож

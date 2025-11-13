@@ -1,14 +1,12 @@
-import React, { FC, ReactElement } from 'react';
+import React, { FC, ReactElement, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 import LoginPage from './pages/Auth/LoginPage.tsx';
 import RegistrationPage from './pages/Auth/RegistrationPage.tsx';
 import TripListPage from './pages/Trip/TripListPage.tsx';
-
-import { getCurrentUserToken } from './services/authService.ts';
 import TripPage from './pages/Trip/TripPage.tsx';
 
-const isLoggedIn = (): boolean => !!getCurrentUserToken();
+import { useAuthStore } from './hooks/useAuthStore.ts'; 
 
 interface AuthRedirectProps {
     element: ReactElement;
@@ -19,21 +17,37 @@ interface ProtectedRouteProps {
 }
 
 const AuthRedirectIfLoggedIn: FC<AuthRedirectProps> = ({ element }) => {
-    return isLoggedIn() ? <Navigate to="/trips" replace /> : element;
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    return isAuthenticated ? <Navigate to="/trips" replace /> : element;
 };
 
 const ProtectedRoute: FC<ProtectedRouteProps> = ({ element }) => {
-    return isLoggedIn() ? element : <Navigate to="/login" replace />;
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    return isAuthenticated ? element : <Navigate to="/login" replace />;
 };
 
 const App: FC = () => {
+    const initializeUser = useAuthStore((state) => state.initializeUser);
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const isInitialized = useAuthStore((state) => state.isInitialized);
+
+    useEffect(() => {
+        initializeUser();
+    }, [initializeUser]);
+    
+    if (!isInitialized) {
+        return <div className="text-center p-10 text-xl">Перевірка автентифікації...</div>;
+    }
+
+    const isAuth = isAuthenticated; 
+
     return (
         <Router>
             <Routes>
 
                 <Route 
                     path="/" 
-                    element={<Navigate to={isLoggedIn() ? "/trips" : "/login"} replace />} 
+                    element={<Navigate to={isAuth ? "/trips" : "/login"} replace />} 
                 />
 
                 <Route 

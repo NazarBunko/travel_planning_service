@@ -25,7 +25,6 @@ const getInitialState = (place: Place | null): PlaceFormData => ({
 
 function usePlaceForm(tripId: number, placeToEdit: Place | null, onClose: () => void, onUpdate: () => void): PlaceFormHook {
     
-    // Використовуємо setFormData напряму замість baseHandleChange
     const { formData, setFormData } = useForm<PlaceFormData>(getInitialState(placeToEdit));
     
     const isEditMode = useMemo(() => !!placeToEdit, [placeToEdit]);

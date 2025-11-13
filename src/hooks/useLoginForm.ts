@@ -1,46 +1,44 @@
-import { useState, useCallback, ChangeEvent, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { loginUser, AuthResult } from '../services/authService.ts'; 
+import { useState, useCallback, FormEvent } from 'react';
+import { useAuthStore } from './useAuthStore.ts'; 
 
-export interface LoginFormData {
+interface FormData {
     email: string;
     password: string;
 }
 
 export interface LoginFormHook {
-    formData: LoginFormData;
+    formData: FormData;
     isLoading: boolean;
-    handleChange: (event: ChangeEvent<HTMLInputElement>) => void;
-    handleSubmit: (event: FormEvent<HTMLFormElement>) => void;
+    handleChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    handleSubmit: (event: FormEvent) => void;
 }
 
 function useLoginForm(): LoginFormHook {
-    const [formData, setFormData] = useState<LoginFormData>({ email: '', password: '' });
+    const [formData, setFormData] = useState<FormData>({ email: '', password: '' });
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    
+    const login = useAuthStore((state) => state.login);
 
-    const navigate = useNavigate();
-
-    const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const handleChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     }, []);
 
-    const handleSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault(); 
+    const handleSubmit = useCallback((e: FormEvent) => {
+        e.preventDefault();
         setIsLoading(true);
 
-        const result: AuthResult = loginUser(formData.email, formData.password );
-
+        const success = login(formData.email, formData.password); 
+        
         setTimeout(() => {
             setIsLoading(false);
-            if (result.success) {
+            if (success) {
                 alert(`Вхід успішний для: ${formData.email}`);
-                navigate('/trips', { replace: true });
             } else {
-                alert(result.message!); 
+                alert('Невірний email або пароль.');
             }
         }, 500);
-    }, [formData, navigate]);
+    }, [formData, login]);
 
     return {
         formData,

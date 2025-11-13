@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { getTripById, Trip, Place } from '../services/tripsService.ts';
-import { findUserById, UserPublic, getCurrentUser } from '../services/authService.ts';
+import { findUserById, UserPublic } from '../services/authService.ts';
 import useTripPlaceCard, { TripPlaceCardHook } from './useTripPlaceCard.ts';
+import { useAuthStore } from './useAuthStore.ts';
 
 export interface TripPageHook extends TripPlaceCardHook {
     trip: Trip | null;
@@ -57,7 +58,7 @@ function useTripPage(): TripPageHook {
     const [isTripModalOpen, setIsTripModalOpen] = useState(false);
     const [isPlaceModalOpen, setIsPlaceModalOpen] = useState(false);
     const [isCollabModalOpen, setIsCollabModalOpen] = useState(false);
-    const currentUser: UserPublic | null = getCurrentUser();
+    const currentUser = useAuthStore((state) => state.user);
 
     const loadTripData = useCallback(() => {
         if (!tripId) return;
