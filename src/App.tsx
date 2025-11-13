@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 
 import LoginPage from './pages/Auth/LoginPage.tsx';
 import RegistrationPage from './pages/Auth/RegistrationPage.tsx';
+import TripListPage from './pages/Trip/TripListPage.tsx';
 
 import { getCurrentUserToken } from './services/authService.ts';
 
@@ -12,8 +13,16 @@ interface AuthRedirectProps {
     element: ReactElement;
 }
 
+interface ProtectedRouteProps {
+    element: ReactElement;
+}
+
 const AuthRedirectIfLoggedIn: FC<AuthRedirectProps> = ({ element }) => {
     return isLoggedIn() ? <Navigate to="/trips" replace /> : element;
+};
+
+const ProtectedRoute: FC<ProtectedRouteProps> = ({ element }) => {
+    return isLoggedIn() ? element : <Navigate to="/login" replace />;
 };
 
 const App: FC = () => {
@@ -25,6 +34,16 @@ const App: FC = () => {
                     path="/" 
                     element={<Navigate to={isLoggedIn() ? "/trips" : "/login"} replace />} 
                 />
+
+                <Route 
+                    path="/trips" 
+                    element={<ProtectedRoute element={<TripListPage />} />} 
+                />
+
+                {/* <Route 
+                    path="/trips/:id" 
+                    element={<ProtectedRoute element={<TripPage />} />} 
+                /> */}
 
                 <Route 
                     path="/login" 

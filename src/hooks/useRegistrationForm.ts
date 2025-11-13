@@ -60,7 +60,7 @@ function useRegistrationForm(): RegistrationFormHook {
             setTimeout(() => {
                 setIsLoading(false);
                 alert(`Реєстрація успішна для: ${formData.email}`);
-                navigate('/rooms', { replace: true });
+                navigate('/trips', { replace: true });
             }, 1500); 
         } else {
             setIsLoading(false);

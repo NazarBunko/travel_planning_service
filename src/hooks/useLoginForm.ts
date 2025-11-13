@@ -35,7 +35,7 @@ function useLoginForm(): LoginFormHook {
             setIsLoading(false);
             if (result.success) {
                 alert(`Вхід успішний для: ${formData.email}`);
-                navigate('/rooms', { replace: true });
+                navigate('/trips', { replace: true });
             } else {
                 alert(result.message!); 
             }
