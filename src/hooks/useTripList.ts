@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getAuthorizedUserTrips, deleteTrip, Trip, ServiceResult } from '../services/tripsService.ts';
 import { logoutUser } from '../services/authService.ts';
-import { useNavigate } from 'react-router-dom';
 
 export interface TripListHook {
     trips: Trip[];
@@ -10,13 +10,19 @@ export interface TripListHook {
     handleDelete: (id: number) => void;
     handleShow: (trip: Trip) => void;
     handleLogout: () => void;
+    loadTrips: () => void;
+    
+    isCreateModalOpen: boolean;
+    handleOpenCreateModal: () => void;
+    handleCloseCreateModal: () => void;
 }
 
 function useTripList(): TripListHook {
     const [trips, setTrips] = useState<Trip[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    
     const navigate = useNavigate();
 
     const loadTrips = useCallback(() => {
@@ -51,12 +57,15 @@ function useTripList(): TripListHook {
 
     const handleShow = useCallback((trip: Trip) => {
         navigate('/trips/' + trip.id);
-    }, []);
+    }, [navigate]);
 
     const handleLogout = useCallback(() => {
         logoutUser();
         navigate('/login', { replace: true });
-    }, []);
+    }, [navigate]);
+
+    const handleOpenCreateModal = useCallback(() => setIsCreateModalOpen(true), []);
+    const handleCloseCreateModal = useCallback(() => setIsCreateModalOpen(false), []);
 
     return {
         trips,
@@ -64,7 +73,12 @@ function useTripList(): TripListHook {
         error,
         handleDelete,
         handleShow,
-        handleLogout
+        handleLogout,
+        loadTrips,
+
+        isCreateModalOpen,
+        handleOpenCreateModal,
+        handleCloseCreateModal,
     };
 }
 

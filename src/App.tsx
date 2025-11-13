@@ -6,6 +6,7 @@ import RegistrationPage from './pages/Auth/RegistrationPage.tsx';
 import TripListPage from './pages/Trip/TripListPage.tsx';
 
 import { getCurrentUserToken } from './services/authService.ts';
+import TripPage from './pages/Trip/TripPage.tsx';
 
 const isLoggedIn = (): boolean => !!getCurrentUserToken();
 
@@ -40,10 +41,10 @@ const App: FC = () => {
                     element={<ProtectedRoute element={<TripListPage />} />} 
                 />
 
-                {/* <Route 
-                    path="/trips/:id" 
+                <Route 
+                    path="/trips/:tripId" 
                     element={<ProtectedRoute element={<TripPage />} />} 
-                /> */}
+                />
 
                 <Route 
                     path="/login" 

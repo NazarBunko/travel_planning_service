@@ -42,12 +42,6 @@ const TripCard: FC<TripCardProps> = ({ trip, onShow, onDelete }) => {
                 {canManage && (
                 <>
                         <Button 
-                            onClick={() => onShow(trip)} 
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-sm"
-                        >
-                            Переглянути
-                        </Button>
-                        <Button 
                             onClick={() => onDelete(trip.id)} 
                             className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                         >
@@ -55,6 +49,12 @@ const TripCard: FC<TripCardProps> = ({ trip, onShow, onDelete }) => {
                         </Button>
                     </>
                 )}
+                <Button 
+                    onClick={() => onShow(trip)} 
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-sm"
+                >
+                    Переглянути
+                </Button>
             </div>
         </div>
     );

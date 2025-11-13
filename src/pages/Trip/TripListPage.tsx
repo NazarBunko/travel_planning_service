@@ -1,8 +1,11 @@
 import React, { FC } from 'react';
 import Button from '../../components/UI/Button.tsx';
 import TripCard from '../../components/Trip/TripCard.tsx';
+import Modal from '../../components/UI/Modal.tsx';
+import TripForm from '../../components/Modal/TripForm.tsx';
 import useTripList, { TripListHook } from '../../hooks/useTripList.ts';
 import { Trip } from '../../services/tripsService.ts';
+import { getCurrentUser, UserPublic } from '../../services/authService.ts';
 
 const TripListPage: FC = () => {
     const { 
@@ -11,8 +14,14 @@ const TripListPage: FC = () => {
         error, 
         handleDelete, 
         handleShow,
-        handleLogout
+        handleLogout,
+        loadTrips,
+        isCreateModalOpen,
+        handleOpenCreateModal,
+        handleCloseCreateModal
     }: TripListHook = useTripList();
+
+    const currentUser: UserPublic | null = getCurrentUser();
 
     if (isLoading) {
         return <p className="text-center mt-12 text-gray-600 text-lg">Завантаження подорожей...</p>;
@@ -24,20 +33,28 @@ const TripListPage: FC = () => {
 
     return (
         <div>
-            <div className="flex justify-end max-w-[150px] ml-[5px] mt-[5px]">
-                <Button 
-                    className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
-                    onClick={() => handleLogout()}
-                >
-                    Вийти
-                </Button>
-            </div>
+            <Modal
+                isOpen={isCreateModalOpen}
+                onClose={handleCloseCreateModal}
+                title="Створення нової подорожі"
+            >
+                <TripForm
+                    onClose={handleCloseCreateModal}
+                    onUpdate={loadTrips}
+                />
+            </Modal>
+            
             <div className="max-w-[1000px] mx-auto mt-12 p-5">
 
-                <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">Мої Подорожі</h2>
+                <h2 className="text-3xl font-bold mb-2 text-center text-gray-800">Мої Подорожі</h2>
+
+                <h5 className="text-xl font-bold mb-4 text-center text-gray-400">{currentUser?.name} ({currentUser?.role})</h5>
                 
                 <div className="flex justify-end mb-4">
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 text-base">
+                    <Button 
+                        className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 text-base"
+                        onClick={handleOpenCreateModal}
+                    >
                         + Створити Подорож
                     </Button>
                 </div>
@@ -56,6 +73,15 @@ const TripListPage: FC = () => {
                         ))
                     )}
                 </div>
+            </div>
+
+            <div className="flex justify-end max-w-[150px] mx-auto">
+                <Button 
+                    className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
+                    onClick={handleLogout}
+                >
+                    Вийти
+                </Button>
             </div>
         </div>
     );

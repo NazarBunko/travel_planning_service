@@ -35,6 +35,11 @@ export const findUserByEmail = (email: string): User | undefined => {
     return users.find(u => u.email === email);
 };
 
+export const findUserById = (id: number): User | undefined => {
+    const users = loadUsers();
+    return users.find(u => u.id === id);
+};
+
 const generateNextUserId = (users: User[]): number => {
     if (users.length === 0) {
         return 1;
