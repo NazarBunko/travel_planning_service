@@ -1,8 +1,9 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import Button from '../../components/UI/Button.tsx';
 import TripCard from '../../components/Trip/TripCard.tsx';
 import Modal from '../../components/UI/Modal.tsx';
 import TripForm from '../../components/Modal/TripForm.tsx';
+import Input from '../../components/UI/Input.tsx';
 import useTripList, { TripListHook } from '../../hooks/useTripList.ts';
 import { Trip } from '../../services/tripsService.ts';
 import { getCurrentUser, UserPublic } from '../../services/authService.ts';
@@ -18,8 +19,15 @@ const TripListPage: FC = () => {
         loadTrips,
         isCreateModalOpen,
         handleOpenCreateModal,
-        handleCloseCreateModal
+        handleCloseCreateModal,
     }: TripListHook = useTripList();
+
+    const [searchTerm, setSearchTerm] = useState('');
+    
+    const filteredTrips: Trip[] = trips.filter(trip => 
+        trip.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        trip.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     const currentUser: UserPublic | null = getCurrentUser();
 
@@ -50,6 +58,16 @@ const TripListPage: FC = () => {
 
                 <h5 className="text-xl font-bold mb-4 text-center text-gray-400">{currentUser?.name} ({currentUser?.role})</h5>
                 
+                <div className="mb-6 max-w-lg mx-auto">
+                    <Input
+                        name="search"
+                        placeholder="Пошук за назвою або описом..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="py-2 px-4"
+                    />
+                </div>
+
                 <div className="flex justify-end mb-4">
                     <Button 
                         className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 text-base"
@@ -60,10 +78,12 @@ const TripListPage: FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                    {trips.length === 0 ? (
-                        <p className="text-center text-gray-500 text-lg">Подорожей не знайдено.</p>
+                    {filteredTrips.length === 0 ? (
+                        <p className="text-center text-gray-500 text-lg">
+                            {searchTerm ? `Подорожей за запитом "${searchTerm}" не знайдено.` : 'Подорожей не знайдено.'}
+                        </p>
                     ) : (
-                        trips.map((trip: Trip) => (
+                        filteredTrips.map((trip: Trip) => (
                             <TripCard
                                 key={trip.id}
                                 trip={trip}
@@ -76,10 +96,9 @@ const TripListPage: FC = () => {
             </div>
 
             <div className="flex justify-end max-w-[150px] mx-auto">
-                <Button 
-                    className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2" 
-                    onClick={handleLogout}
-                >
+                <Button
+                    className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 text-base focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    onClick={handleLogout}>
                     Вийти
                 </Button>
             </div>
