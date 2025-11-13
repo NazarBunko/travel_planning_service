@@ -85,6 +85,24 @@ export const registerUser = ({ name, email, password }: { name: string, email: s
     return { success: true, user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role } };
 };
 
+export const resetPassword = (email: string, newPassword: string): { success: boolean, message: string } => {
+    const users = loadUsers();
+    const userIndex = users.findIndex(u => u.email === email);
+
+    if (userIndex === -1) {
+        return { success: false, message: 'Користувача з таким email не знайдено.' };
+    }
+    
+    const updatedUser = { ...users[userIndex], password: newPassword };
+    
+    const newUsers = [...users];
+    newUsers[userIndex] = updatedUser;
+
+    saveUsers(newUsers);
+
+    return { success: true, message: 'Пароль успішно скинуто.' };
+};
+
 export const loginUser = (email: string, password: string): AuthResult => {
     const user = findUserByEmail(email);
 

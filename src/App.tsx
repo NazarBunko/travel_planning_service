@@ -7,6 +7,7 @@ import TripListPage from './pages/Trip/TripListPage.tsx';
 import TripPage from './pages/Trip/TripPage.tsx';
 
 import { useAuthStore } from './hooks/useAuthStore.ts'; 
+import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage.tsx';
 
 interface AuthRedirectProps {
     element: ReactElement;
@@ -67,6 +68,10 @@ const App: FC = () => {
                 <Route 
                     path="/register" 
                     element={<AuthRedirectIfLoggedIn element={<RegistrationPage />} />} 
+                />
+                <Route 
+                    path="/forgot-password" 
+                    element={<AuthRedirectIfLoggedIn element={<ForgotPasswordPage />} />} 
                 />
                 
                 <Route path="*" element={

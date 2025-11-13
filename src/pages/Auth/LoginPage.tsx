@@ -45,6 +45,10 @@ const LoginPage: FC = () => {
                 <p className="text-center text-sm mt-4 text-gray-600">
                     Ще не зареєстровані? <a href='/register' className="text-blue-600 hover:underline">Зареєструватись</a>
                 </p>
+
+                <p className="text-center text-sm mt-4 text-gray-600">
+                    Забули пароль? <a href='/forgot-password' className="text-blue-600 hover:underline">Відновити</a>
+                </p>
                 
             </form>
         </div>
