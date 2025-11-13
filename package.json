@@ -1,6 +1,7 @@
 {
   "name": "travel_planning_service",
   "version": "0.1.0",
+  "homepage": "./",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
